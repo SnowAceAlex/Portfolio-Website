@@ -1,0 +1,23 @@
+/* Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Monsieur+La+Doulaise&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=TASA+Orbiter:wght@400..800&display=swap");
+
+@import "tailwindcss";
+
+/* Global font styles */
+body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  overflow-x: hidden;
+}
+
+/* Font utility classes */
+.font-jakarta {
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.font-tasa {
+  font-family: "TASA Orbiter", sans-serif;
+}
+
+.font-doulaise {
+  font-family: "Monsieur La Doulaise", cursive;
+}
