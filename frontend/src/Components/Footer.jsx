@@ -5,13 +5,13 @@ import GitHubIcon from "@mui/icons-material/GitHub";
 
 function Footer() {
   return (
-    <footer className="bg-[#191919] h-64 w-full py-10 text-white">
+    <footer className="bg-[#191919] w-full py-10 text-white">
       <div className="max-w-6xl mx-auto px-6">
         {/* Title */}
-        <h2 className="text-4xl font-semibold mb-4">Contact</h2>
+        <h2 className="text-3xl sm:text-4xl font-semibold mb-4">Contact</h2>
 
         {/* Description */}
-        <p className="max-w-2xl mb-4">
+        <p className="max-w-2xl mb-6 text-sm sm:text-base">
           I am currently a final-year Computer Science student at International
           University - VNU HCMC. I have hands-on experience with full-stack
           development using Node.js, Express, Spring Boot, React, and Next.js,
@@ -20,9 +20,9 @@ function Footer() {
         </p>
 
         {/* Contact Information */}
-        <div className="mb-6 flex items-center space-x-6">
+        <div className="mb-2 sm:mb-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
           {/* Email */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <EmailOutlinedIcon />
             <span className="inline-flex">
               <a
@@ -34,7 +34,7 @@ function Footer() {
             </span>
           </div>
           {/* Phone */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <span className="inline-flex ">
               <PhoneIphoneOutlinedIcon />
               <a href="tel:+84971956757" className="hover:underline">
@@ -43,7 +43,7 @@ function Footer() {
             </span>
           </div>
           {/* LinkedIn */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <LinkedInIcon />
             <span
               role="button"
@@ -70,7 +70,7 @@ function Footer() {
             </span>
           </div>
           {/* GitHub */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <GitHubIcon />
             <span
               role="button"
