@@ -45,22 +45,56 @@ function Footer() {
           {/* LinkedIn */}
           <div className="flex items-center space-x-2">
             <LinkedInIcon />
-            <a
-              href="https://www.linkedin.com/in/cong-vinh-bui/"
-              className="hover:underline"
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                window.open(
+                  "https://www.linkedin.com/in/cong-vinh-bui/",
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  window.open(
+                    "https://www.linkedin.com/in/cong-vinh-bui/",
+                    "_blank",
+                    "noopener,noreferrer"
+                  );
+                }
+              }}
+              className="hover:underline cursor-pointer"
             >
               LinkedIn
-            </a>
+            </span>
           </div>
           {/* GitHub */}
           <div className="flex items-center space-x-2">
             <GitHubIcon />
-            <a
-              href="https://github.com/SnowAceAlex"
-              className="hover:underline"
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                window.open(
+                  "https://github.com/SnowAceAlex",
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  window.open(
+                    "https://github.com/SnowAceAlex",
+                    "_blank",
+                    "noopener,noreferrer"
+                  );
+                }
+              }}
+              className="hover:underline cursor-pointer"
             >
               GitHub
-            </a>
+            </span>
           </div>
         </div>
       </div>
