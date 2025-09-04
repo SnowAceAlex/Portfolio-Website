@@ -20,7 +20,7 @@ function Footer() {
         </p>
 
         {/* Contact Information */}
-        <p className="mb-6 flex items-center space-x-6">
+        <div className="mb-6 flex items-center space-x-6">
           {/* Email */}
           <div className="flex items-center space-x-2">
             <EmailOutlinedIcon />
@@ -62,7 +62,7 @@ function Footer() {
               GitHub
             </a>
           </div>
-        </p>
+        </div>
       </div>
     </footer>
   );
