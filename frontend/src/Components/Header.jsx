@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,19 +9,19 @@ function Header() {
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-12 py-5">
         {/* Logo */}
         <div className="text-3xl md:text-4xl font-bold font-doulaise">
-          Snow Ace
+          <Link to="/">Snow Ace</Link>
         </div>
         {/* Desktop Navigation */}
         <nav className="hidden md:block">
           <ul className="flex md:space-x-16 lg:space-x-32">
             <li>
-              <a href="/">Home</a>
+              <Link to="/">Home</Link>
             </li>
             <li>
-              <a href="/projects">Projects</a>
+              <Link to="/projects">Projects</Link>
             </li>
             <li>
-              <a href="/contact">Contact</a>
+              <Link to="/contact">Contact</Link>
             </li>
           </ul>
         </nav>
@@ -68,19 +69,19 @@ function Header() {
         <nav className="md:hidden border-t border-white/10">
           <ul className="px-6 py-4 space-y-3">
             <li>
-              <a href="/" onClick={() => setIsOpen(false)}>
+              <Link to="/" onClick={() => setIsOpen(false)}>
                 Home
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/projects" onClick={() => setIsOpen(false)}>
+              <Link to="/projects" onClick={() => setIsOpen(false)}>
                 Projects
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/contact" onClick={() => setIsOpen(false)}>
+              <Link to="/contact" onClick={() => setIsOpen(false)}>
                 Contact
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
