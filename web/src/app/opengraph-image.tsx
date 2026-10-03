@@ -16,19 +16,19 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 80,
-          background: "#f3f5f8",
-          color: "#0f1217",
-          fontFamily: "sans-serif",
+          background: "#f8f9fd",
+          color: "#2b63cc",
+          fontFamily: "serif",
         }}
       >
-        <div style={{ fontSize: 32, color: "#566170" }}>{site.name}</div>
-        <div style={{ display: "flex", flexDirection: "column", fontSize: 84, fontWeight: 700, letterSpacing: -3, lineHeight: 1.02 }}>
+        <div style={{ fontSize: 28, letterSpacing: 6, fontFamily: "monospace" }}>VINH BUI · SNOW ACE</div>
+        <div style={{ display: "flex", flexDirection: "column", fontSize: 92, fontWeight: 400, letterSpacing: -2, lineHeight: 1.04 }}>
           <span>Full-stack developer,</span>
-          <span style={{ color: "#566170" }}>taking the scenic route.</span>
+          <span style={{ fontStyle: "italic" }}>taking the scenic route.</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 120, height: 8, borderRadius: 8, background: "#2b63cc" }} />
-          <div style={{ fontSize: 26, color: "#566170" }}>Final-year CS student at IU, VNU-HCMC</div>
+          <div style={{ width: 120, height: 0, borderTop: "3px dashed #2b63cc" }} />
+          <div style={{ fontSize: 26, fontFamily: "monospace" }}>Final-year CS student at IU, VNU-HCMC</div>
         </div>
       </div>
     ),
