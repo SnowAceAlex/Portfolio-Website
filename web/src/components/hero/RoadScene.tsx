@@ -1,70 +1,24 @@
 "use client";
 
-import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
-import { useImperativeHandle, useMemo, useRef, type RefObject } from "react";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, type ComponentProps, type RefObject } from "react";
 import * as THREE from "three";
 import type { Theme } from "@/lib/theme";
 import type { SceneHandle } from "./HeroScene";
 
-// A small diorama: a toy car drives along an endless snowy road.
-// The world scrolls past the car, so nothing travels far from the origin.
+// A 3D line drawing: an ink car on an endless snowy road. Every mesh is an unlit paper-coloured
+// fill with ink edge lines on top; the car is the only solid ink object. The world scrolls past
+// the car, so nothing travels far from the origin.
 
-const SPEED = 3.2; // world units per second
-const TREE_SPAN = 40; // trees wrap across [-20, 20] on x
-const DASH_SPAN = 36;
-const MOUNTAIN_SPAN = 72;
+const INK = "#2b63cc"; // --ink-base, the car blue
+const SPEED = 7.5; // world units per second
+const DASH_GAP = 2.8;
+const GRAVITY = 24;
+const HOP_VY = 7.2;
+const CAM_BASE = new THREE.Vector3(10.5, 6.4, 13.5);
+const CAM_TARGET = new THREE.Vector3(0.6, 0.9, 0);
 
-const palettes = {
-  light: {
-    sky: "#e3e8ee",
-    ground: "#f4f6f9",
-    road: "#c9d0d9",
-    dash: "#fafbfc",
-    pine: "#6c8a8a",
-    pineDark: "#58736f",
-    trunk: "#7a6a5c",
-    snowCap: "#fafbfc",
-    mountain: "#d3dbe4",
-    car: "#2b63cc",
-    glass: "#2a3546",
-    tyre: "#20252d",
-    headlight: "#fff4d6",
-    taillight: "#d9654a",
-    flake: "#9fb0c3",
-    hemiSky: "#ffffff",
-    hemiGround: "#c4ceda",
-    hemiIntensity: 1.6,
-    sunIntensity: 1.5,
-    beam: 0,
-  },
-  dark: {
-    sky: "#111722",
-    ground: "#1a212d",
-    road: "#262e3b",
-    dash: "#8d97a5",
-    pine: "#33484d",
-    pineDark: "#2a3c40",
-    trunk: "#2f2925",
-    snowCap: "#aab6c4",
-    mountain: "#1c2430",
-    car: "#83a9f2",
-    glass: "#0b0f15",
-    tyre: "#0d1015",
-    headlight: "#fff1c9",
-    taillight: "#ff6a4d",
-    flake: "#e7ebf0",
-    hemiSky: "#8193b3",
-    hemiGround: "#0b0e13",
-    hemiIntensity: 0.9,
-    sunIntensity: 0.55,
-    beam: 28,
-  },
-} as const;
-
-type Palette = (typeof palettes)[Theme];
-
-// Deterministic pseudo-random so server and client never disagree and layouts stay stable.
+// Deterministic pseudo-random for the initial layout; recycling later uses Math.random.
 function seeded(seed: number) {
   let s = seed;
   return () => {
@@ -73,352 +27,464 @@ function seeded(seed: number) {
   };
 }
 
-type TreeSpec = { x: number; z: number; scale: number; dark: boolean };
-
-function useTrees(): TreeSpec[] {
-  return useMemo(() => {
-    const rand = seeded(7);
-    const trees: TreeSpec[] = [];
-    for (let i = 0; i < 38; i++) {
-      trees.push({
-        x: -20 + rand() * TREE_SPAN,
-        z: -2.4 - rand() * 8,
-        scale: 0.7 + rand() * 0.7,
-        dark: rand() > 0.5,
-      });
-    }
-    for (let i = 0; i < 6; i++) {
-      trees.push({
-        x: -20 + rand() * TREE_SPAN,
-        z: 2.6 + rand() * 1.2,
-        scale: 0.45 + rand() * 0.25,
-        dark: rand() > 0.5,
-      });
-    }
-    return trees;
-  }, []);
+function createMaterials() {
+  const fill = () =>
+    new THREE.MeshBasicMaterial({ polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  return {
+    paper: fill(),
+    car: fill(),
+    glass: fill(),
+    wheel: fill(),
+    line: new THREE.LineBasicMaterial(),
+    faint: new THREE.LineBasicMaterial({ transparent: true, opacity: 0.35 }),
+    carLine: new THREE.LineBasicMaterial(),
+    wheelLine: new THREE.LineBasicMaterial(),
+    lamp: new THREE.MeshBasicMaterial(),
+    shadow: new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }),
+    beams: [0.12, 0.14, 0.18].map(
+      (opacity) =>
+        new THREE.MeshBasicMaterial({
+          color: "#ffdf9a",
+          transparent: true,
+          opacity,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        }),
+    ),
+    snow: new THREE.PointsMaterial({ size: 0.09, transparent: true, depthWrite: false }),
+  };
 }
 
-function Pine({ spec, p }: { spec: TreeSpec; p: Palette }) {
-  const body = spec.dark ? p.pineDark : p.pine;
+type Materials = ReturnType<typeof createMaterials>;
+
+// Day: ink on white. Night: navy paper, pale ink lines, a lighter car and warm lamps.
+function applyTheme(m: Materials, scene: THREE.Scene, night: boolean) {
+  const ink = new THREE.Color(INK);
+  const paper = night ? ink.clone().lerp(new THREE.Color("#040913"), 0.84) : new THREE.Color("#ffffff");
+  const line = night ? ink.clone().lerp(new THREE.Color("#ffffff"), 0.72) : ink.clone();
+  const car = night ? ink.clone().lerp(new THREE.Color("#ffffff"), 0.22) : ink.clone();
+  const carLine = night
+    ? ink.clone().lerp(new THREE.Color("#ffffff"), 0.8)
+    : ink.clone().lerp(new THREE.Color("#000814"), 0.45);
+
+  scene.background = paper;
+  if (scene.fog instanceof THREE.Fog) {
+    scene.fog.color.copy(paper);
+    scene.fog.near = night ? 10 : 16;
+    scene.fog.far = night ? 44 : 62;
+  }
+  m.paper.color.copy(paper);
+  m.line.color.copy(line);
+  m.faint.color.copy(line);
+  m.car.color.copy(car);
+  m.carLine.color.copy(carLine);
+  m.glass.color.copy(night ? paper.clone().lerp(line, 0.12) : paper);
+  m.wheel.color.copy(night ? paper.clone().lerp(new THREE.Color("#000000"), 0.3) : carLine);
+  m.wheelLine.color.copy(night ? line : paper);
+  m.lamp.color.set(night ? "#ffe2a6" : "#ffffff");
+  m.shadow.color.copy(night ? new THREE.Color("#000000") : ink);
+  m.shadow.opacity = night ? 0.35 : 0.14;
+  m.snow.color.copy(line);
+  m.snow.opacity = night ? 0.8 : 0.5;
+}
+
+// A paper fill with ink edges on top.
+function Outlined({
+  geometry,
+  edges,
+  fill,
+  line,
+  threshold = 20,
+  ...props
+}: {
+  geometry: THREE.BufferGeometry;
+  edges?: THREE.BufferGeometry;
+  fill: THREE.Material;
+  line: THREE.LineBasicMaterial;
+  threshold?: number;
+} & Omit<ComponentProps<"group">, "children">) {
+  const outline = useMemo(() => edges ?? new THREE.EdgesGeometry(geometry, threshold), [edges, geometry, threshold]);
   return (
-    <>
-      <mesh position={[0, 0.18, 0]} castShadow>
-        <cylinderGeometry args={[0.07, 0.09, 0.36, 6]} />
-        <meshStandardMaterial color={p.trunk} roughness={1} />
-      </mesh>
-      <mesh position={[0, 0.75, 0]} castShadow>
-        <coneGeometry args={[0.52, 0.95, 7]} />
-        <meshStandardMaterial color={body} roughness={0.95} flatShading />
-      </mesh>
-      <mesh position={[0, 1.22, 0]} castShadow>
-        <coneGeometry args={[0.38, 0.75, 7]} />
-        <meshStandardMaterial color={body} roughness={0.95} flatShading />
-      </mesh>
-      <mesh position={[0, 1.52, 0]}>
-        <coneGeometry args={[0.2, 0.34, 7]} />
-        <meshStandardMaterial color={p.snowCap} roughness={0.8} flatShading />
-      </mesh>
-    </>
+    <group {...props}>
+      <mesh geometry={geometry} material={fill} />
+      <lineSegments geometry={outline} material={line} />
+    </group>
   );
 }
 
-function Forest({ p, speed }: { p: Palette; speed: number }) {
-  const trees = useTrees();
-  const refs = useRef<(THREE.Group | null)[]>([]);
+function segments(points: [number, number, number][]) {
+  return new THREE.BufferGeometry().setFromPoints(points.map((p) => new THREE.Vector3(...p)));
+}
+
+function Road({ m, speed }: { m: Materials; speed: number }) {
+  const dashes = useRef<THREE.LineSegments>(null);
+  const tufts = useRef<THREE.LineSegments>(null);
+  const geo = useMemo(() => {
+    const rand = seeded(11);
+    const dashPts: [number, number, number][] = [];
+    for (let i = -34; i < 34; i++) dashPts.push([i * DASH_GAP, 0, 0], [i * DASH_GAP + 1.3, 0, 0]);
+    // snow tufts on the shoulders: short hatch marks
+    const tuftPts: [number, number, number][] = [];
+    for (let i = 0; i < 220; i++) {
+      const x = (rand() - 0.5) * 160;
+      const z = (rand() < 0.5 ? -1 : 1) * (2.8 + rand() * 16);
+      tuftPts.push([x, 0, z], [x + 0.35, 0, z + 0.12]);
+    }
+    return {
+      edges: segments([
+        [-90, 0, -1.7],
+        [90, 0, -1.7],
+        [-90, 0, 1.7],
+        [90, 0, 1.7],
+      ]),
+      shoulders: segments([
+        [-90, 0, -2.5],
+        [90, 0, -2.5],
+        [-90, 0, 2.5],
+        [90, 0, 2.5],
+      ]),
+      dashes: segments(dashPts),
+      tufts: segments(tuftPts),
+    };
+  }, []);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
-    for (const g of refs.current) {
-      if (!g) continue;
-      g.position.x -= speed * dt;
-      if (g.position.x < -TREE_SPAN / 2) g.position.x += TREE_SPAN;
+    if (!speed) return;
+    if (dashes.current) dashes.current.position.x = (dashes.current.position.x - speed * dt) % DASH_GAP;
+    if (tufts.current) {
+      tufts.current.position.x -= speed * dt;
+      if (tufts.current.position.x < -80) tufts.current.position.x += 80;
     }
   });
 
   return (
     <>
-      {trees.map((spec, i) => (
-        <group
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} material={m.paper}>
+        <planeGeometry args={[400, 400]} />
+      </mesh>
+      <lineSegments geometry={geo.edges} material={m.line} />
+      <lineSegments geometry={geo.shoulders} material={m.faint} />
+      <lineSegments ref={dashes} geometry={geo.dashes} material={m.line} />
+      <lineSegments ref={tufts} geometry={geo.tufts} material={m.faint} />
+    </>
+  );
+}
+
+function Mountains({ m }: { m: Materials }) {
+  const peaks = useMemo(() => {
+    const rand = seeded(42);
+    return Array.from({ length: 9 }, (_, i) => {
+      const h = 7 + rand() * 9;
+      const geometry = new THREE.ConeGeometry(9 + rand() * 9, h, 5 + Math.floor(rand() * 2));
+      return {
+        geometry,
+        position: [-70 + i * 18 + rand() * 6, h / 2 - 0.2, -52 - rand() * 14] as [number, number, number],
+        rotation: rand() * 3,
+      };
+    });
+  }, []);
+  return (
+    <>
+      {peaks.map((p, i) => (
+        <Outlined
           key={i}
-          ref={(el) => void (refs.current[i] = el)}
-          position={[spec.x, 0, spec.z]}
-          scale={spec.scale}
-        >
-          <Pine spec={spec} p={p} />
+          geometry={p.geometry}
+          fill={m.paper}
+          line={m.faint}
+          threshold={1}
+          position={p.position}
+          rotation={[0, p.rotation, 0]}
+        />
+      ))}
+    </>
+  );
+}
+
+// ~22% of trees stand on the near side at a smaller scale.
+function treeSpot(x: number, rand: () => number) {
+  const near = rand() < 0.22;
+  return {
+    position: [x, 0, near ? 3.6 + rand() * 3 : -(3.4 + rand() * 24)] as [number, number, number],
+    scale: near ? 0.55 + rand() * 0.3 : 0.7 + rand() * 0.75,
+    rotation: [0, rand() * 3, 0] as [number, number, number],
+  };
+}
+
+function Forest({ m, speed }: { m: Materials; speed: number }) {
+  const trees = useRef<(THREE.Group | null)[]>([]);
+  const spots = useMemo(() => {
+    const rand = seeded(7);
+    return Array.from({ length: 46 }, () => treeSpot((rand() - 0.5) * 100, rand));
+  }, []);
+  const parts = useMemo(() => {
+    const lower = new THREE.ConeGeometry(0.95, 1.9, 7).translate(0, 1.55, 0);
+    const upper = new THREE.ConeGeometry(0.7, 1.5, 7).translate(0, 2.45, 0);
+    const trunk = new THREE.CylinderGeometry(0.12, 0.14, 0.6, 6).translate(0, 0.3, 0);
+    return [lower, upper, trunk].map((geometry) => ({ geometry, edges: new THREE.EdgesGeometry(geometry, 30) }));
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!speed) return;
+    const dt = Math.min(delta, 0.05);
+    for (const t of trees.current) {
+      if (!t) continue;
+      t.position.x -= speed * dt;
+      if (t.position.x < -50) {
+        // recycle it ahead of the car
+        const spot = treeSpot(50 + Math.random() * 6, Math.random);
+        t.position.set(...spot.position);
+        t.scale.setScalar(spot.scale);
+        t.rotation.set(...spot.rotation);
+      }
+    }
+  });
+
+  return (
+    <>
+      {spots.map((spot, i) => (
+        <group key={i} ref={(el) => void (trees.current[i] = el)} {...spot}>
+          {parts.map((p, k) => (
+            <Outlined key={k} geometry={p.geometry} edges={p.edges} fill={m.paper} line={m.line} />
+          ))}
         </group>
       ))}
     </>
   );
 }
 
-function Mountains({ p, speed }: { p: Palette; speed: number }) {
-  const group = useRef<THREE.Group>(null);
-  const peaks = useMemo(() => {
-    const rand = seeded(42);
-    return Array.from({ length: 9 }, (_, i) => ({
-      x: -MOUNTAIN_SPAN / 2 + i * (MOUNTAIN_SPAN / 9) + rand() * 4,
-      z: -16 - rand() * 4,
-      h: 3 + rand() * 3.5,
-      r: 3.5 + rand() * 2.5,
-    }));
+const WHEELS: [number, number][] = [
+  [1.15, 0.86],
+  [1.15, -0.86],
+  [-1.15, 0.86],
+  [-1.15, -0.86],
+];
+
+function Car({
+  m,
+  speed,
+  night,
+  handle,
+}: {
+  m: Materials;
+  speed: number;
+  night: boolean;
+  handle?: RefObject<SceneHandle | null>;
+}) {
+  const body = useRef<THREE.Group>(null);
+  const wheels = useRef<(THREE.Group | null)[]>([]);
+  const shadow = useRef<THREE.Mesh>(null);
+  const state = useRef({ y: 0, vy: 0, squash: 0, t: 0 });
+  const invalidate = useThree((s) => s.invalidate);
+  const gl = useThree((s) => s.gl);
+
+  const geo = useMemo(() => {
+    const wheel = new THREE.CylinderGeometry(0.43, 0.43, 0.32, 14).rotateX(Math.PI / 2);
+    const beams = [
+      [11, 2.6],
+      [7, 1.7],
+      [4, 1.1],
+    ].map(([len, half]) => {
+      const s = new THREE.Shape();
+      s.moveTo(0, -0.45);
+      s.lineTo(len, -half);
+      s.lineTo(len, half);
+      s.lineTo(0, 0.45);
+      s.closePath();
+      return new THREE.ShapeGeometry(s);
+    });
+    return {
+      body: new THREE.BoxGeometry(3.5, 0.85, 1.75),
+      hood: new THREE.BoxGeometry(0.9, 0.25, 1.7),
+      cabin: new THREE.BoxGeometry(2.0, 0.78, 1.55),
+      pillar: new THREE.BoxGeometry(0.16, 0.78, 1.57),
+      roof: new THREE.BoxGeometry(2.1, 0.12, 1.6),
+      bar: new THREE.EdgesGeometry(new THREE.BoxGeometry(1.7, 0.08, 0.08)),
+      headlamp: new THREE.BoxGeometry(0.06, 0.2, 0.36),
+      taillamp: new THREE.BoxGeometry(0.06, 0.18, 0.28),
+      wheel,
+      wheelEdges: new THREE.EdgesGeometry(wheel, 10),
+      shadow: new THREE.CircleGeometry(1, 28),
+      beams,
+    };
   }, []);
 
-  useFrame((_, delta) => {
-    if (!group.current) return;
-    const dt = Math.min(delta, 0.05);
-    // Distant peaks drift slower than the road to give depth.
-    for (const child of group.current.children) {
-      child.position.x -= speed * 0.12 * dt;
-      if (child.position.x < -MOUNTAIN_SPAN / 2) child.position.x += MOUNTAIN_SPAN;
-    }
-  });
-
-  return (
-    <group ref={group}>
-      {peaks.map((m, i) => (
-        <mesh key={i} position={[m.x, m.h / 2 - 0.05, m.z]}>
-          <coneGeometry args={[m.r, m.h, 5]} />
-          <meshStandardMaterial color={p.mountain} roughness={1} flatShading />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function Road({ p, speed }: { p: Palette; speed: number }) {
-  const dashes = useRef<THREE.Group>(null);
+  // Hop only from the ground; the road pass calls this through `handle`.
+  const hop = useCallback(() => {
+    const s = state.current;
+    if (s.y > 0.001) return;
+    s.vy = HOP_VY;
+    invalidate();
+  }, [invalidate]);
+  useImperativeHandle(handle, () => ({ hop }), [hop]);
 
   useFrame((_, delta) => {
-    if (!dashes.current) return;
     const dt = Math.min(delta, 0.05);
-    for (const d of dashes.current.children) {
-      d.position.x -= speed * dt;
-      if (d.position.x < -DASH_SPAN / 2) d.position.x += DASH_SPAN;
+    const s = state.current;
+    s.t += dt;
+    if (speed) for (const w of wheels.current) if (w) w.rotation.z -= (speed * dt) / 0.43;
+
+    // hop: launch, gravity, then a landing squash that recovers at 4/s
+    if (s.vy !== 0 || s.y > 0) {
+      s.vy -= GRAVITY * dt;
+      s.y += s.vy * dt;
+      if (s.y <= 0) {
+        s.y = 0;
+        s.vy = 0;
+        s.squash = 1;
+      }
     }
+    s.squash = Math.max(0, s.squash - dt * 4);
+
+    const bob = speed ? Math.sin(s.t * 13) * 0.025 : 0;
+    if (body.current) {
+      body.current.position.y = s.y + bob;
+      body.current.rotation.z = s.y > 0 ? s.vy * 0.018 : 0;
+      body.current.scale.set(1 + s.squash * 0.06, 1 - s.squash * 0.09, 1);
+    }
+    for (const w of wheels.current) if (w) w.position.y = 0.43 + s.y;
+    const k = 1 / (1 + s.y * 0.35);
+    shadow.current?.scale.set(2.3 * k, 1.15 * k, 1);
+
+    // With on-demand rendering (reduced motion, or scrolled away), keep frames coming until the hop settles.
+    if (s.vy !== 0 || s.y > 0 || s.squash > 0) invalidate();
   });
+
+  const onDown = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    hop();
+  };
+  const setCursor = (c: string) => () => void (gl.domElement.style.cursor = c);
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[120, 60]} />
-        <meshStandardMaterial color={p.ground} roughness={1} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-        <planeGeometry args={[120, 2.6]} />
-        <meshStandardMaterial color={p.road} roughness={0.9} />
-      </mesh>
-      <group ref={dashes}>
-        {Array.from({ length: 18 }, (_, i) => (
-          <mesh key={i} position={[-DASH_SPAN / 2 + i * 2, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[0.9, 0.08]} />
-            <meshBasicMaterial color={p.dash} />
-          </mesh>
+      <group onPointerDown={onDown} onPointerOver={setCursor("pointer")} onPointerOut={setCursor("")}>
+        <group ref={body}>
+          <Outlined geometry={geo.body} fill={m.car} line={m.carLine} position={[0, 0.78, 0]} />
+          <Outlined geometry={geo.hood} fill={m.car} line={m.carLine} position={[1.3, 1.24, 0]} />
+          <Outlined geometry={geo.cabin} fill={m.glass} line={m.carLine} position={[-0.4, 1.6, 0]} />
+          {[-1.32, 0.52].map((x) => (
+            <Outlined key={x} geometry={geo.pillar} fill={m.car} line={m.carLine} position={[x, 1.6, 0]} />
+          ))}
+          <Outlined geometry={geo.roof} fill={m.car} line={m.carLine} position={[-0.4, 2.04, 0]} />
+          {[-0.6, 0.6].map((z) => (
+            <lineSegments key={z} geometry={geo.bar} material={m.carLine} position={[-0.4, 2.2, z]} />
+          ))}
+          {[-0.55, 0.55].map((z) => (
+            <mesh key={z} geometry={geo.headlamp} material={m.lamp} position={[1.76, 0.88, z]} />
+          ))}
+          {[-0.6, 0.6].map((z) => (
+            <mesh key={z} geometry={geo.taillamp} material={m.lamp} position={[-1.76, 0.95, z]} />
+          ))}
+        </group>
+        {WHEELS.map(([x, z], i) => (
+          <group key={i} ref={(el) => void (wheels.current[i] = el)} position={[x, 0.43, z]}>
+            <mesh geometry={geo.wheel} material={m.wheel} />
+            <lineSegments geometry={geo.wheelEdges} material={m.wheelLine} />
+          </group>
+        ))}
+      </group>
+      <mesh
+        ref={shadow}
+        geometry={geo.shadow}
+        material={m.shadow}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0.01, 0]}
+        scale={[2.3, 1.15, 1]}
+      />
+      {/* headlight cones lying on the road ahead, night only */}
+      <group visible={night}>
+        {geo.beams.map((g, i) => (
+          <mesh key={i} geometry={g} material={m.beams[i]} rotation={[-Math.PI / 2, 0, 0]} position={[1.8, 0.02, 0]} />
         ))}
       </group>
     </group>
   );
 }
 
-function Car({
-  p,
-  speed,
-  theme,
-  handle,
-}: {
-  p: Palette;
-  speed: number;
-  theme: Theme;
-  handle?: RefObject<SceneHandle | null>;
-}) {
-  const root = useRef<THREE.Group>(null);
-  const body = useRef<THREE.Group>(null);
-  const wheels = useRef<(THREE.Mesh | null)[]>([]);
-  const hop = useRef({ y: 0, v: 0 });
-  const beamTarget = useMemo(() => {
-    const o = new THREE.Object3D();
-    o.position.set(6, 0, 0);
-    return o;
-  }, []);
-
-  useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
-    const h = hop.current;
-    if (h.y > 0 || h.v > 0) {
-      h.v -= 14 * dt;
-      h.y = Math.max(0, h.y + h.v * dt);
-      if (h.y === 0) h.v = 0;
-    }
-    if (root.current) {
-      root.current.position.y = h.y;
-      root.current.position.z = 0.55 + Math.sin(t * 0.6) * 0.06 * Math.sign(speed);
-      root.current.rotation.z = h.v * 0.025;
-    }
-    if (body.current && speed > 0) {
-      body.current.position.y = Math.sin(t * 11) * 0.012;
-      body.current.rotation.z = Math.sin(t * 5.5) * 0.008;
-    }
-    for (const w of wheels.current) if (w) w.rotation.y -= (speed * dt) / 0.2;
-  });
-
-  const jump = () => {
-    if (hop.current.y === 0) hop.current.v = 4.2;
-  };
-  useImperativeHandle(handle, () => ({ hop: jump }));
-  const onHop = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    jump();
-  };
-
-  const wheelPositions: [number, number, number][] = [
-    [0.55, 0.2, 0.44],
-    [0.55, 0.2, -0.44],
-    [-0.58, 0.2, 0.44],
-    [-0.58, 0.2, -0.44],
-  ];
-
-  return (
-    <group
-      ref={root}
-      position={[0, 0, 0.55]}
-      onClick={onHop}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "")}
-    >
-      <group ref={body}>
-        <RoundedBox args={[1.8, 0.42, 0.9]} radius={0.13} smoothness={4} position={[0, 0.43, 0]} castShadow>
-          <meshStandardMaterial color={p.car} roughness={0.45} metalness={0.1} />
-        </RoundedBox>
-        <RoundedBox args={[0.98, 0.4, 0.8]} radius={0.12} smoothness={4} position={[-0.16, 0.78, 0]} castShadow>
-          <meshStandardMaterial color={p.glass} roughness={0.2} metalness={0.3} />
-        </RoundedBox>
-        <RoundedBox args={[0.86, 0.07, 0.82]} radius={0.03} smoothness={2} position={[-0.18, 0.99, 0]}>
-          <meshStandardMaterial color={p.car} roughness={0.45} />
-        </RoundedBox>
-        {/* Roof rack with a little snowboard, the road-trip detail */}
-        <mesh position={[-0.18, 1.07, 0]} castShadow>
-          <boxGeometry args={[0.95, 0.05, 0.22]} />
-          <meshStandardMaterial color={p.snowCap} roughness={0.6} />
-        </mesh>
-        {[0.27, -0.27].map((z) => (
-          <mesh key={`h${z}`} position={[0.9, 0.47, z]}>
-            <boxGeometry args={[0.03, 0.09, 0.16]} />
-            <meshStandardMaterial color={p.headlight} emissive={p.headlight} emissiveIntensity={theme === "dark" ? 3 : 0.4} />
-          </mesh>
-        ))}
-        {[0.3, -0.3].map((z) => (
-          <mesh key={`t${z}`} position={[-0.9, 0.5, z]}>
-            <boxGeometry args={[0.03, 0.07, 0.14]} />
-            <meshStandardMaterial color={p.taillight} emissive={p.taillight} emissiveIntensity={theme === "dark" ? 2 : 0.3} />
-          </mesh>
-        ))}
-      </group>
-      {wheelPositions.map((pos, i) => (
-        <mesh
-          key={i}
-          ref={(el) => void (wheels.current[i] = el)}
-          position={pos}
-          rotation={[Math.PI / 2, 0, 0]}
-          castShadow
-        >
-          <cylinderGeometry args={[0.2, 0.2, 0.16, 18]} />
-          <meshStandardMaterial color={p.tyre} roughness={0.9} />
-        </mesh>
-      ))}
-      <primitive object={beamTarget} />
-      {p.beam > 0 && (
-        <spotLight
-          position={[0.95, 0.5, 0]}
-          target={beamTarget}
-          color={p.headlight}
-          intensity={p.beam}
-          distance={11}
-          angle={0.42}
-          penumbra={0.7}
-          decay={1.6}
-          castShadow={false}
-        />
-      )}
-    </group>
-  );
-}
-
-function makeFlakeTexture() {
-  const size = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  g.addColorStop(0, "rgba(255,255,255,1)");
-  g.addColorStop(0.45, "rgba(255,255,255,0.75)");
-  g.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  return new THREE.CanvasTexture(canvas);
-}
-
-function Snowfall({ p, speed, falling }: { p: Palette; speed: number; falling: boolean }) {
-  const COUNT = 700;
+function Snow({ m, speed }: { m: Materials; speed: number }) {
   const points = useRef<THREE.Points>(null);
-  const texture = useMemo(() => makeFlakeTexture(), []);
-  const { positions, fall } = useMemo(() => {
+  const positions = useMemo(() => {
     const rand = seeded(99);
-    const positions = new Float32Array(COUNT * 3);
-    const fall = new Float32Array(COUNT);
-    for (let i = 0; i < COUNT; i++) {
-      positions[i * 3] = -14 + rand() * 28;
-      positions[i * 3 + 1] = rand() * 8;
-      positions[i * 3 + 2] = -10 + rand() * 16;
-      fall[i] = 0.35 + rand() * 0.6;
+    const arr = new Float32Array(520 * 3);
+    for (let i = 0; i < 520; i++) {
+      arr[i * 3] = (rand() - 0.5) * 60;
+      arr[i * 3 + 1] = rand() * 14;
+      arr[i * 3 + 2] = (rand() - 0.6) * 40;
     }
-    return { positions, fall };
+    return arr;
   }, []);
 
-  useFrame((state, delta) => {
-    if (!points.current || !falling) return;
+  useFrame((_, delta) => {
+    if (!speed || !points.current) return;
     const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
     const attr = points.current.geometry.getAttribute("position") as THREE.BufferAttribute;
-    const arr = attr.array as Float32Array;
-    for (let i = 0; i < COUNT; i++) {
-      const ix = i * 3;
-      arr[ix] -= (speed * 0.35 + Math.sin(t + i) * 0.15) * dt;
-      arr[ix + 1] -= fall[i] * dt;
-      if (arr[ix + 1] < 0) arr[ix + 1] += 8;
-      if (arr[ix] < -14) arr[ix] += 28;
+    const a = attr.array as Float32Array;
+    for (let i = 0; i < a.length; i += 3) {
+      a[i] -= speed * 0.35 * dt;
+      a[i + 1] -= 0.9 * dt;
+      if (a[i + 1] < 0) a[i + 1] += 14;
+      if (a[i] < -30) a[i] += 60;
     }
     attr.needsUpdate = true;
   });
 
   return (
-    <points ref={points}>
+    <points ref={points} material={m.snow}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial
-        map={texture}
-        color={p.flake}
-        size={0.075}
-        sizeAttenuation
-        transparent
-        depthWrite={false}
-        opacity={0.9}
-      />
     </points>
   );
 }
 
+// FOV 30 from (10.5, 6.4, 13.5), pulled back on narrow screens so the car stays in frame.
 function CameraRig() {
-  const target = useMemo(() => new THREE.Vector3(0.9, 0.55, 0), []);
-  useFrame((state, delta) => {
-    const k = 1 - Math.exp(-delta * 2.5);
-    const cam = state.camera;
-    cam.position.x += (-1.4 + state.pointer.x * 0.7 - cam.position.x) * k;
-    cam.position.y += (2.5 + state.pointer.y * 0.35 - cam.position.y) * k;
-    cam.lookAt(target);
-  });
+  const camera = useThree((s) => s.camera);
+  const size = useThree((s) => s.size);
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    if (!(camera instanceof THREE.PerspectiveCamera)) return;
+    const aspect = size.width / Math.max(1, size.height);
+    camera.position.copy(CAM_BASE).multiplyScalar(Math.max(1, 1.5 / aspect));
+    camera.lookAt(CAM_TARGET);
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [camera, size, invalidate]);
   return null;
+}
+
+function World({
+  theme,
+  reduce,
+  handle,
+}: {
+  theme: Theme;
+  reduce: boolean;
+  handle?: RefObject<SceneHandle | null>;
+}) {
+  const scene = useThree((s) => s.scene);
+  const invalidate = useThree((s) => s.invalidate);
+  const m = useMemo(() => createMaterials(), []);
+  const night = theme === "dark";
+  const speed = reduce ? 0 : SPEED;
+
+  useEffect(() => {
+    applyTheme(m, scene, night);
+    invalidate();
+  }, [m, scene, night, invalidate]);
+
+  return (
+    <>
+      <fog attach="fog" args={["#ffffff", 16, 62]} />
+      <CameraRig />
+      <Road m={m} speed={speed} />
+      <Mountains m={m} />
+      <Forest m={m} speed={speed} />
+      <Car m={m} speed={speed} night={night} handle={handle} />
+      <Snow m={m} speed={speed} />
+    </>
+  );
 }
 
 export default function RoadScene({
@@ -434,43 +500,17 @@ export default function RoadScene({
   handle?: RefObject<SceneHandle | null>;
   onReady?: () => void;
 }) {
-  const p = palettes[theme];
-  const speed = reduce ? 0 : SPEED;
-
   return (
     <Canvas
       flat
-      shadows
-      dpr={[1, 1.75]}
+      dpr={[1, 1.5]}
       frameloop={active ? "always" : "demand"}
-      camera={{ position: [-1.4, 2.5, 8.4], fov: 34, near: 0.1, far: 80 }}
-      gl={{ antialias: true, alpha: true }}
-      onCreated={({ camera }) => {
-        camera.lookAt(0.9, 0.55, 0);
-        onReady?.();
-      }}
+      camera={{ fov: 30, near: 0.1, far: 300, position: CAM_BASE.toArray() }}
+      gl={{ antialias: true }}
+      onCreated={() => onReady?.()}
       aria-hidden="true"
     >
-      <color attach="background" args={[p.sky]} />
-      <fog attach="fog" args={[p.sky, 9, 30]} />
-      <hemisphereLight args={[p.hemiSky, p.hemiGround, p.hemiIntensity]} />
-      <directionalLight
-        position={[4, 9, 6]}
-        intensity={p.sunIntensity}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-6}
-        shadow-camera-right={6}
-        shadow-camera-top={6}
-        shadow-camera-bottom={-6}
-        shadow-bias={-0.0005}
-      />
-      <Mountains p={p} speed={speed} />
-      <Road p={p} speed={speed} />
-      <Forest p={p} speed={speed} />
-      <Car p={p} speed={speed} theme={theme} handle={handle} />
-      <Snowfall p={p} speed={speed} falling={!reduce} />
-      {!reduce && <CameraRig />}
+      <World theme={theme} reduce={reduce} handle={handle} />
     </Canvas>
   );
 }
