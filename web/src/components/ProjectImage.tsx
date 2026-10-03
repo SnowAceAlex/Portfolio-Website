@@ -35,7 +35,7 @@ export function ProjectImage({
         fill
         sizes={sizes}
         priority={priority}
-        className="ink-photo object-cover object-left-top"
+        className="ink-photo object-cover object-top-left"
       />
       <span className="ink-tint" aria-hidden="true" />
       <span className="ink-paper" aria-hidden="true" />

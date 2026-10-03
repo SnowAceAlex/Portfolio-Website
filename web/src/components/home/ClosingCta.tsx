@@ -1,14 +1,10 @@
-"use client";
-
 import Link from "next/link";
+import { CopyEmail } from "@/components/CopyEmail";
 import { IllustrationSlot } from "@/components/IllustrationSlot";
 import { site } from "@/content/site";
-import { useCopyEmail } from "@/lib/copy";
 
 // EXIT 04: the closing call to action, with the copyable email.
 export function ClosingCta() {
-  const { copied, copy } = useCopyEmail();
-
   return (
     <section
       id="say-hello"
@@ -31,18 +27,8 @@ export function ClosingCta() {
             Resume
           </a>
         </div>
-        <div className="flex flex-wrap items-center gap-3 border-t-[1.5px] border-dashed border-line pt-[18px]">
-          <button
-            type="button"
-            onClick={copy}
-            className="text-left text-[clamp(13px,1.4vw,16px)] underline underline-offset-4 [overflow-wrap:anywhere]"
-            aria-label={`Copy email address ${site.email}`}
-          >
-            {site.email}
-          </button>
-          <span className="font-hand text-[23px] leading-none" role="status" aria-live="polite">
-            {copied ? "copied! see you on the road" : "← click to copy"}
-          </span>
+        <div className="border-t-[1.5px] border-dashed border-line pt-[18px]">
+          <CopyEmail />
         </div>
       </div>
       <IllustrationSlot
