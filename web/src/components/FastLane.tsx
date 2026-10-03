@@ -120,10 +120,10 @@ export function FastLane() {
               ))}
             </div>
             <div className="mt-auto flex flex-wrap gap-2">
-              <a href={site.resume} target="_blank" rel="noopener noreferrer" className="pill pill-ink min-h-[46px] flex-1">
+              <a href={site.resume} target="_blank" rel="noopener noreferrer" className="pill pill-ink min-h-[46px]! flex-1">
                 Resume ↓
               </a>
-              <Link href="/contact" onClick={closeFastLane} className="pill pill-outline min-h-[46px] flex-1">
+              <Link href="/contact" onClick={closeFastLane} className="pill pill-outline min-h-[46px]! flex-1">
                 Say hello →
               </Link>
             </div>

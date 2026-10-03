@@ -2,9 +2,10 @@
 
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
-import { useMemo, useRef } from "react";
+import { useImperativeHandle, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import type { Theme } from "@/lib/theme";
+import type { SceneHandle } from "./HeroScene";
 
 // A small diorama: a toy car drives along an endless snowy road.
 // The world scrolls past the car, so nothing travels far from the origin.
@@ -219,7 +220,17 @@ function Road({ p, speed }: { p: Palette; speed: number }) {
   );
 }
 
-function Car({ p, speed, theme }: { p: Palette; speed: number; theme: Theme }) {
+function Car({
+  p,
+  speed,
+  theme,
+  handle,
+}: {
+  p: Palette;
+  speed: number;
+  theme: Theme;
+  handle?: RefObject<SceneHandle | null>;
+}) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const wheels = useRef<(THREE.Mesh | null)[]>([]);
@@ -251,9 +262,13 @@ function Car({ p, speed, theme }: { p: Palette; speed: number; theme: Theme }) {
     for (const w of wheels.current) if (w) w.rotation.y -= (speed * dt) / 0.2;
   });
 
+  const jump = () => {
+    if (hop.current.y === 0) hop.current.v = 4.2;
+  };
+  useImperativeHandle(handle, () => ({ hop: jump }));
   const onHop = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (hop.current.y === 0) hop.current.v = 4.2;
+    jump();
   };
 
   const wheelPositions: [number, number, number][] = [
@@ -410,11 +425,13 @@ export default function RoadScene({
   theme,
   active,
   reduce,
+  handle,
   onReady,
 }: {
   theme: Theme;
   active: boolean;
   reduce: boolean;
+  handle?: RefObject<SceneHandle | null>;
   onReady?: () => void;
 }) {
   const p = palettes[theme];
@@ -451,7 +468,7 @@ export default function RoadScene({
       <Mountains p={p} speed={speed} />
       <Road p={p} speed={speed} />
       <Forest p={p} speed={speed} />
-      <Car p={p} speed={speed} theme={theme} />
+      <Car p={p} speed={speed} theme={theme} handle={handle} />
       <Snowfall p={p} speed={speed} falling={!reduce} />
       {!reduce && <CameraRig />}
     </Canvas>

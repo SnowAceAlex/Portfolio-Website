@@ -13,19 +13,22 @@ export function Tag({ children, size = "sm" }: { children: ReactNode; size?: "sm
   );
 }
 
-// Label box: 1.5px ink, radius 5px, small spaced caps ("KM 0", "№ 01"). `filled` inverts it.
+// Label box: 1.5px ink, radius 5px, small spaced caps ("KM 0", "№ 01"). `filled` inverts it;
+// `md` is the slightly larger journey/detail size.
 export function Chip({
   children,
   filled = false,
+  size = "sm",
   className = "",
 }: {
   children: ReactNode;
   filled?: boolean;
+  size?: "sm" | "md";
   className?: string;
 }) {
   return (
     <span
-      className={`whitespace-nowrap rounded-[5px] border-[1.5px] border-ink px-2 py-[3px] text-[10px] tracking-[.16em] ${
+      className={`whitespace-nowrap rounded-[5px] border-[1.5px] border-ink px-2 py-[3px] ${size === "sm" ? "text-[10px] tracking-[.16em]" : "text-[10.5px] tracking-[.14em]"} ${
         filled ? "bg-ink text-panel" : "bg-panel"
       } ${className}`}
     >
