@@ -25,14 +25,14 @@ export default function ProjectsPage() {
           <Reveal key={project.slug} delay={(i % 2) * 0.1} className={i % 2 === 1 ? "md:mt-24" : undefined}>
             <Link href={`/projects/${project.slug}`} className="group block">
               <div className="overflow-hidden rounded-2xl bg-sunken ring-1 ring-line">
-                <Image
+                {project.image && <Image
                   src={project.image.src}
                   alt={project.image.alt}
                   width={project.image.width}
                   height={project.image.height}
                   sizes="(min-width: 768px) 50vw, 100vw"
                   className="aspect-[4/3] w-full object-cover object-left-top transition-transform duration-700 ease-out-soft group-hover:scale-[1.03]"
-                />
+                />}
               </div>
               <div className="mt-5 flex items-start justify-between gap-4">
                 <div>

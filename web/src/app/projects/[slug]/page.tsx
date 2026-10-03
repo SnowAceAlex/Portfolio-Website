@@ -19,7 +19,9 @@ export async function generateMetadata({ params }: PageProps<"/projects/[slug]">
   return {
     title: project.title,
     description: project.summary,
-    openGraph: { images: [{ url: project.image.src, width: project.image.width, height: project.image.height }] },
+    ...(project.image && {
+      openGraph: { images: [{ url: project.image.src, width: project.image.width, height: project.image.height }] },
+    }),
   };
 }
 
@@ -43,7 +45,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
 
       <Reveal delay={0.1} className="mt-14">
         <div className="overflow-hidden rounded-2xl bg-sunken ring-1 ring-line">
-          <Image
+          {project.image && <Image
             src={project.image.src}
             alt={project.image.alt}
             width={project.image.width}
@@ -51,7 +53,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
             sizes="(min-width: 1152px) 1152px, 100vw"
             priority
             className="w-full"
-          />
+          />}
         </div>
       </Reveal>
 
@@ -73,7 +75,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               <dt className="text-sm text-muted">Type</dt>
               <dd className="mt-1 text-base">
                 {project.kind}
-                {project.team ? ", team project" : ""}
+                
               </dd>
             </div>
             <div>

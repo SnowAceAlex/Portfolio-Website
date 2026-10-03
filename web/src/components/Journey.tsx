@@ -55,7 +55,7 @@ function Stop({ stop, last }: { stop: JourneyStop; last: boolean }) {
         }`}
         aria-hidden="true"
       />
-      {stop.when && <p className="font-mono text-xs text-muted">{stop.when}</p>}
+      <p className="font-mono text-xs text-muted">{stop.date}</p>
       <h3
         className={`text-2xl font-semibold tracking-tight transition-colors duration-500 md:text-3xl ${
           reached ? "text-fg" : "text-muted"
@@ -63,7 +63,6 @@ function Stop({ stop, last }: { stop: JourneyStop; last: boolean }) {
       >
         {stop.title}
       </h3>
-      {stop.place && <p className="mt-1 text-base text-muted">{stop.place}</p>}
       <p className="mt-4 max-w-[55ch] text-base leading-relaxed text-muted">{stop.body}</p>
     </li>
   );

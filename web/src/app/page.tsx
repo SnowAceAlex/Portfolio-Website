@@ -5,7 +5,6 @@ import { Hero } from "@/components/hero/Hero";
 import { Journey } from "@/components/Journey";
 import { Reveal } from "@/components/motion/Reveal";
 import { QuickLinks } from "@/components/QuickLinks";
-import { Toolbox } from "@/components/Toolbox";
 import { WorkList } from "@/components/WorkList";
 import { journey, projects } from "@/content/site";
 
@@ -50,9 +49,6 @@ export default function HomePage() {
       <section className="pt-28 md:pt-40">
         <Reveal className="mx-auto max-w-6xl px-4 md:px-6">
           <h2 className="text-4xl font-semibold tracking-tighter md:text-6xl">What I build with</h2>
-        </Reveal>
-        <Reveal delay={0.1} className="mt-10 md:mt-14">
-          <Toolbox />
         </Reveal>
       </section>
 

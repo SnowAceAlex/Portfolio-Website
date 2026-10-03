@@ -40,7 +40,7 @@ export function WorkList({ projects }: { projects: Project[] }) {
               href={`/projects/${project.slug}`}
               className="group/row grid grid-cols-1 gap-4 py-8 md:grid-cols-12 md:items-baseline md:gap-6 md:py-10"
             >
-              <div className="overflow-hidden rounded-2xl bg-sunken md:hidden">
+              {project.image && <div className="overflow-hidden rounded-2xl bg-sunken md:hidden">
                 <Image
                   src={project.image.src}
                   alt={project.image.alt}
@@ -49,7 +49,7 @@ export function WorkList({ projects }: { projects: Project[] }) {
                   sizes="100vw"
                   className="aspect-[16/10] w-full object-cover object-left-top"
                 />
-              </div>
+              </div>}
               <h3 className="text-4xl font-semibold tracking-tighter transition-transform duration-500 ease-out-soft md:col-span-5 md:text-6xl md:group-hover/row:translate-x-2">
                 {project.title}
               </h3>
@@ -75,7 +75,7 @@ export function WorkList({ projects }: { projects: Project[] }) {
           aria-hidden="true"
         >
           <AnimatePresence>
-            {current && (
+            {current?.image && (
               <motion.div
                 key={current.slug}
                 className="absolute inset-x-0 top-0 overflow-hidden rounded-2xl bg-sunken shadow-[0_30px_60px_-20px_rgb(15_18_23/0.35)] ring-1 ring-line"
