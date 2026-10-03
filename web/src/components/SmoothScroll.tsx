@@ -6,5 +6,5 @@ import { useReducedMotionSafe } from "@/lib/motion";
 export function SmoothScroll() {
   const reduce = useReducedMotionSafe();
   if (reduce) return null;
-  return <ReactLenis root options={{ lerp: 0.12, anchors: { offset: -96 } }} />;
+  return <ReactLenis root options={{ lerp: 0.12 }} />;
 }

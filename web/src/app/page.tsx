@@ -3,6 +3,7 @@ import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { ContactCta } from "@/components/ContactCta";
 import { Hero } from "@/components/hero/Hero";
 import { Journey } from "@/components/Journey";
+import { MobileProfile } from "@/components/MobileProfile";
 import { Reveal } from "@/components/motion/Reveal";
 import { QuickLinks } from "@/components/QuickLinks";
 import { WorkList } from "@/components/WorkList";
@@ -11,7 +12,10 @@ import { journey, projects } from "@/content/site";
 export default function HomePage() {
   return (
     <>
-      <Hero />
+      <section id="home" className="scroll-mt-24">
+        <MobileProfile />
+        <Hero />
+      </section>
       <QuickLinks />
 
       <section id="work" className="mx-auto max-w-6xl scroll-mt-24 px-4 pt-28 md:px-6 md:pt-40">

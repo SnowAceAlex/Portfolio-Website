@@ -103,6 +103,40 @@ button {
   box-shadow: 6px 7px 0 var(--hatch);
 }
 
+/* Pill buttons: filled ink for the main action, outline for the second. */
+@utility pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color 0.3s,
+    opacity 0.3s;
+}
+
+@utility pill-ink {
+  background: var(--ink);
+  color: var(--panel);
+  &:hover {
+    opacity: 0.88;
+  }
+}
+
+@utility pill-outline {
+  background: transparent;
+  color: var(--ink);
+  &:hover {
+    background: var(--hatch);
+  }
+}
+
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }

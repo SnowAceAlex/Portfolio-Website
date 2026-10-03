@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Mono, Nanum_Pen_Script, Newsreader } from "next/font/google";
 import { Nav } from "@/components/Nav";
+import { FastLane } from "@/components/FastLane";
 import { Footer } from "@/components/Footer";
+import { ShellProvider } from "@/components/ShellProvider";
+import { Sidebar } from "@/components/Sidebar";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { site } from "@/content/site";
 import "lenis/dist/lenis.css";
@@ -69,11 +72,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-dvh flex flex-col">
-        <SmoothScroll />
-        <Nav />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body className="min-h-dvh">
+        <ShellProvider>
+          <SmoothScroll />
+          {/* Nav and sidebar are both sticky, so they stay on screen the whole way down. */}
+          <Nav />
+          <div className="flex items-start">
+            <Sidebar />
+            <main className="min-w-0 flex-1 p-[clamp(12px,2.2vw,28px)]">
+              {children}
+              <Footer />
+            </main>
+          </div>
+          <FastLane />
+        </ShellProvider>
       </body>
     </html>
   );
