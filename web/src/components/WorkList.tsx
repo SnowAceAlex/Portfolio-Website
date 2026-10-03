@@ -3,15 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type PointerEvent } from "react";
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import type { Project } from "@/content/site";
+import { useReducedMotionSafe } from "@/lib/motion";
 
 const PREVIEW_W = 360;
 
 // Big project titles; on desktop a preview card follows the cursor while hovering a row.
 export function WorkList({ projects }: { projects: Project[] }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const [active, setActive] = useState<number | null>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);

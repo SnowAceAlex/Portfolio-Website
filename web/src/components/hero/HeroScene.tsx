@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Component, useRef, useState, type ReactNode } from "react";
-import { useInView, useReducedMotion } from "motion/react";
+import { useInView } from "motion/react";
 import { useTheme } from "@/lib/theme";
+import { useReducedMotionSafe } from "@/lib/motion";
 
 // three.js is heavy, so it ships in its own chunk and only loads in the browser.
 const RoadScene = dynamic(() => import("./RoadScene"), { ssr: false });
@@ -22,7 +23,7 @@ class SceneBoundary extends Component<{ fallback: ReactNode; children: ReactNode
 export function HeroScene() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "120px" });
-  const reduce = useReducedMotion() ?? false;
+  const reduce = useReducedMotionSafe();
   const theme = useTheme();
   const [ready, setReady] = useState(false);
 

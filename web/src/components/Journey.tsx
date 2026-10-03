@@ -1,14 +1,15 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
+import { motion, useInView, useScroll, useSpring, useTransform } from "motion/react";
 import { CarProfileIcon } from "@phosphor-icons/react";
 import type { JourneyStop } from "@/content/site";
+import { useReducedMotionSafe } from "@/lib/motion";
 
 // A vertical road: the car drives down it as you scroll, lighting up each stop it passes.
 export function Journey({ stops }: { stops: JourneyStop[] }) {
   const ref = useRef<HTMLOListElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 65%", "end 55%"] });
   const progress = useSpring(scrollYProgress, { stiffness: 110, damping: 28, mass: 0.4 });
   const carY = useTransform(progress, [0, 1], ["0%", "100%"]);

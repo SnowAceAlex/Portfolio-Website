@@ -1,11 +1,12 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import { motion, useMotionValue, useSpring } from "motion/react";
 import type { PointerEvent, ReactNode } from "react";
+import { useReducedMotionSafe } from "@/lib/motion";
 
 // Pulls its child gently toward the cursor. Motion values only, so no re-renders.
 export function Magnetic({ children, strength = 0.28 }: { children: ReactNode; strength?: number }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const sx = useSpring(x, { stiffness: 220, damping: 18, mass: 0.4 });

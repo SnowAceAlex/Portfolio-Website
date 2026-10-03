@@ -1,10 +1,10 @@
 "use client";
 
 import { ReactLenis } from "lenis/react";
-import { useReducedMotion } from "motion/react";
+import { useReducedMotionSafe } from "@/lib/motion";
 
 export function SmoothScroll() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   if (reduce) return null;
   return <ReactLenis root options={{ lerp: 0.12, anchors: { offset: -96 } }} />;
 }
