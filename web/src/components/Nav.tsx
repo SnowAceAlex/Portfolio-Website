@@ -66,7 +66,8 @@ export function Nav() {
   const carLeft = active < 0 ? "-6%" : `${((active + 0.5) / exits.length) * 100}%`;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-paper transition-[background-color] duration-[600ms]">
+    // Fixed, not sticky: it stays on screen whatever its ancestors do. The layout reserves its 81px.
+    <header className="fixed inset-x-0 top-0 z-30 border-b border-line bg-paper transition-[background-color] duration-[600ms]">
       <div className="relative h-20">
         <div className="absolute inset-x-0 top-6 h-4 border-y-[1.5px] border-ink" aria-hidden="true">
           <div className="absolute inset-x-0 top-[5px] border-t-[1.5px] border-dashed border-ink opacity-50" />

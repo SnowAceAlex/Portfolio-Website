@@ -16,14 +16,14 @@ const snow = [
   { left: 170, top: 20, size: 2 },
 ];
 
-// Desktop only (≥900px): sticky under the nav, always on screen while the page scrolls.
+// Desktop only (≥900px): fixed under the nav, always on screen while the page scrolls.
 export function Sidebar() {
   const { openFastLane } = useShell();
   const theme = useTheme();
   const night = theme === "dark";
 
   return (
-    <aside className="sticky top-[81px] hidden h-[min(calc(100vh-81px),840px)] w-[252px] flex-none flex-col border-r border-line pb-6 pl-8 pr-6 pt-[30px] desk:flex">
+    <aside className="fixed left-0 top-[81px] z-20 hidden h-[min(calc(100vh-81px),840px)] w-[252px] flex-col border-r border-line pb-6 pl-8 pr-6 pt-[30px] desk:flex">
       <InkAvatar size={66} />
       <p className="mt-[18px] font-serif text-[46px] leading-[.95] tracking-[-.01em]">
         Vinh

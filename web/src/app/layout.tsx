@@ -75,11 +75,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-dvh">
         <ShellProvider>
           <SmoothScroll />
-          {/* Nav and sidebar are both sticky, so they stay on screen the whole way down. */}
+          {/* Nav and sidebar are both fixed, so they stay on screen the whole way down.
+              The spacer and main's left margin reserve their room (81px tall, 252px wide). */}
           <Nav />
-          <div className="flex items-start">
+          <div className="h-[81px]" aria-hidden="true" />
+          <div>
             <Sidebar />
-            <main className="min-w-0 flex-1 p-[clamp(12px,2.2vw,28px)]">
+            <main className="min-w-0 p-[clamp(12px,2.2vw,28px)] desk:ml-[252px]">
               {children}
               <Footer />
             </main>
