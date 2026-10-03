@@ -84,7 +84,7 @@ export function StartLights() {
           }
         }}
         aria-label="Start-lights reaction game"
-        className="flex min-h-[172px] w-full select-none flex-col items-center justify-center gap-2.5 border-b-[1.5px] border-ink px-3 py-4 [-webkit-tap-highlight-color:transparent]"
+        className="flex min-h-[172px] w-full select-none focus-visible:-outline-offset-4 flex-col items-center justify-center gap-2.5 border-b-[1.5px] border-ink px-3 py-4 [-webkit-tap-highlight-color:transparent]"
       >
         <span className="flex gap-[7px] rounded-[8px] border-[1.5px] border-ink bg-panel px-2.5 py-2" aria-hidden="true">
           {[1, 2, 3, 4, 5].map((k) => (

@@ -9,7 +9,7 @@ const tape = "absolute -top-[11px] z-[2] h-6 w-[110px] border border-line bg-[co
 // The project's hero shot, taped to the page, with an INK / COLOUR switch for the print treatment.
 export function DetailImage({ project }: { project: Project }) {
   const [colour, setColour] = useState(false);
-  const option = (on: boolean) => `min-h-9 px-3.5 ${on ? "bg-ink text-panel" : "text-ink"}`;
+  const option = (on: boolean) => `min-h-9 px-3.5 focus-visible:-outline-offset-4 ${on ? "bg-ink text-panel focus-visible:outline-panel" : "text-ink"}`;
 
   return (
     <div className="relative">
