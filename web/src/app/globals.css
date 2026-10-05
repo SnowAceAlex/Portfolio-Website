@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+  "Road trip": one ink colour on snow-white paper.
+  Everything (text, borders, icons, fills) is --ink. Surfaces are --paper (page) and --panel (cards).
+  --line and --hatch are mixes of ink, never new hues. light = day, dark = night.
+  Lines are 1.5px ink; radii: panels 16px, images 14px, label boxes 5px, tags 3px, buttons pill.
+*/
+:root {
+  --ink-base: #2b63cc;
+  --ink: var(--ink-base);
+  --paper: color-mix(in oklch, var(--ink-base) 3%, #ffffff);
+  --panel: #ffffff;
+  --line: color-mix(in oklch, var(--ink) 30%, transparent);
+  --hatch: color-mix(in oklch, var(--ink) 15%, transparent);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --ink: color-mix(in oklch, var(--ink-base) 26%, #ffffff);
+  --paper: color-mix(in oklch, var(--ink-base) 16%, #050a14);
+  --panel: color-mix(in oklch, var(--ink-base) 22%, #07101f);
+  --line: color-mix(in oklch, var(--ink) 30%, transparent);
+  --hatch: color-mix(in oklch, var(--ink) 15%, transparent);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-hatch: var(--hatch);
+  --color-transparent: transparent;
+
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+  --font-hand: var(--font-nanum-pen), cursive;
+
+  --breakpoint-*: initial;
+  --breakpoint-sm: 500px;
+  --breakpoint-md: 600px;
+  --breakpoint-lg: 820px;
+  --breakpoint-desk: 900px;
+  --breakpoint-wide: 1100px;
+
+  --ease-road: cubic-bezier(0.45, 0, 0.2, 1);
+  --ease-lift: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-drawer: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-stamp: cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  /* clip, not hidden: hidden would break the sticky nav and sidebar */
+  overflow-x: clip;
+  transition:
+    background-color 0.6s,
+    color 0.6s;
+}
+
+/* In the base layer so utilities (e.g. text-panel on a link) still win. */
+@layer base {
+  a {
+    color: inherit;
+    text-underline-offset: 3px;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--panel);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+}
+
+/* Placeholder fill for illustration slots and missing screenshots. */
+@utility hatch {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 9px, var(--hatch) 9px 10.5px),
+    var(--panel);
+}
+
+/* The one shadow in the system: an offset print, used on the road pass and the postcard. */
+@utility print-shadow {
+  box-shadow: 6px 7px 0 var(--hatch);
+}
+
+/* Pill buttons: filled ink for the main action, outline for the second. */
+@utility pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color 0.3s,
+    opacity 0.3s;
+}
+
+@utility pill-ink {
+  background: var(--ink);
+  color: var(--panel);
+  &:hover {
+    opacity: 0.88;
+  }
+}
+
+@utility pill-outline {
+  background: transparent;
+  color: var(--ink);
+  &:hover {
+    background: var(--hatch);
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  Ink duotone: screenshots are printed in ink until hovered (or switched to COLOUR).
+  Day: greyscale photo, ink screened over it. Night: ink multiplied, then paper screened on top.
+*/
+.ink-photo {
+  filter: grayscale(1) contrast(1.15) brightness(1.04);
+  transition: filter 0.5s;
+}
+
+.ink-tint,
+.ink-paper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+.ink-tint {
+  background: var(--ink);
+  mix-blend-mode: screen;
+}
+
+.ink-paper {
+  background: var(--paper);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+[data-theme="dark"] .ink-photo {
+  filter: grayscale(1) contrast(1.1);
+}
+
+[data-theme="dark"] .ink-tint {
+  mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .ink-paper {
+  opacity: 1;
+}
+
+.ink-colour .ink-photo,
+.ink-hover:hover .ink-photo,
+.ink-hover:focus-visible .ink-photo {
+  filter: none;
+}
+
+.ink-colour :is(.ink-tint, .ink-paper),
+.ink-hover:hover :is(.ink-tint, .ink-paper),
+.ink-hover:focus-visible :is(.ink-tint, .ink-paper) {
+  opacity: 0;
+}
+
+/* Reduced motion: no crossfades, lifts or slides anywhere. JS-driven motion checks the same query. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
