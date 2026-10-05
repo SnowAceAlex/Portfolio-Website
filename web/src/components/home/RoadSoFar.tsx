@@ -62,8 +62,8 @@ export function RoadSoFar() {
               {stop.illustration && (
                 <IllustrationSlot
                   label={stop.illustration.label}
-                  src={stop.illustration.src}
-                  className="mt-4 h-[190px] rounded-[14px] border-[1.5px] border-ink p-3.5"
+                  image={stop.illustration.image}
+                  className="mt-4 aspect-video rounded-[14px] border-[1.5px] border-ink p-3.5"
                 />
               )}
             </li>

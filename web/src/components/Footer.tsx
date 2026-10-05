@@ -26,6 +26,12 @@ export function Footer() {
       </div>
       <IllustrationSlot
         label={"Illustration · roadside rest stop\nbench, vending machine, sleepy dog"}
+        image={{
+          src: "/race-weekend.jpg",
+          alt: "A Formula 1 car blurring past the grandstands on a race weekend",
+          position: "center 78%",
+        }}
+        sizes="(min-width: 1200px) 1100px, 100vw"
         className="h-[clamp(170px,20vw,240px)] rounded-t-2xl border-[1.5px] border-b-0 border-ink p-3.5"
         labelClassName="mr-[60px] max-w-[calc(100%-120px)]"
       >

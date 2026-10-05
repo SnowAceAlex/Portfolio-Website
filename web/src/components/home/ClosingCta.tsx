@@ -23,7 +23,12 @@ export function ClosingCta() {
           <Link href="/contact" className="pill pill-ink px-5!">
             Say hello →
           </Link>
-          <a href={site.resume} target="_blank" rel="noopener noreferrer" className="pill pill-outline px-5!">
+          <a
+            href={site.resume}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pill pill-outline px-5!"
+          >
             Resume
           </a>
         </div>
@@ -32,7 +37,16 @@ export function ClosingCta() {
         </div>
       </div>
       <IllustrationSlot
-        label={"Illustration · petrol station at night\none pump, one light, the car topping up"}
+        label={
+          "Illustration · petrol station at night\none pump, one light, the car topping up"
+        }
+        image={{
+          src: "/mirror-selfie.jpg",
+          alt: "Vinh taking a mirror selfie in a white hallway",
+          position: "center 95%",
+          zoom: 1.15,
+        }}
+        sizes="(min-width: 900px) 40vw, 100vw"
         className="min-h-[300px] flex-[5_1_300px] rounded-2xl border-[1.5px] border-ink p-4"
       />
     </section>

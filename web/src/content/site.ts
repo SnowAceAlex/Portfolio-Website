@@ -1,3 +1,5 @@
+import type { SlotImage } from "@/components/IllustrationSlot";
+
 // Single source of truth for every piece of copy on the site.
 // To add a project, a job or a journey stop, append to the arrays below.
 
@@ -7,7 +9,7 @@ export const site = {
   handle: "Snow Ace",
   role: "Full-stack developer",
   email: "alexvinh2911@gmail.com",
-  resume: "/cv.pdf",
+  resume: "/Bui-Cong-Vinh-CV.pdf",
   github: "https://github.com/SnowAceAlex",
   linkedin: "https://www.linkedin.com/in/cong-vinh-bui/",
   description:
@@ -49,19 +51,21 @@ export const projects: Project[] = [
     scope: "Solo · 96 commits",
     summary:
       "A land registry on blockchain where owners prove ownership, mortgages and transfers with zero-knowledge proofs, without revealing their records.",
-    placeholder: {
-      long: "Illustration · a toll booth that checks your proof, not your ID",
-      short: "Illustration · toll booth",
+    image: {
+      src: "/zk-land-registry.jpg",
+      width: 1713,
+      height: 917,
+      alt: "ZK Land Registry landing page, split into a Resident portal for proofs and a Government portal for officers",
     },
     stack: ["TypeScript", "Next.js", "NestJS", "Solidity", "Circom", "Hardhat", "PostgreSQL", "Prisma", "snarkjs"],
     highlights: [
-      "Groth16 zk-SNARK circuits for ownership, mortgage and transfer over a depth-24 Merkle tree. Proofs generate in 0.7–1.1 s and verify off-chain in 14–18 ms.",
-      "Solidity verifiers deployed to Sepolia at ~250K–267K gas per proof, matching local Hardhat estimates to within tens of units.",
-      "A sparse Merkle-tree storage layer in PostgreSQL that keeps proof lookups at ~10 ms p50 across 4.5M property records; stale-while-revalidate caching cut API p99 latency by 96%.",
-      "Correctness checked end to end: the on-chain root matched database state across 22 Sepolia rounds, with 740 passing unit, integration and contract tests.",
+      "An off-chain sparse Merkle tree with Groth16 zk-SNARKs, so owners can prove ownership, a clean mortgage status and transfer rights without disclosing their identity or records.",
+      "Three Circom circuits (up to 28.2K R1CS constraints over a depth-24 Merkle tree): 660–1,133 ms to prove, 14–18 ms to verify, ~722 B per proof.",
+      "Storage kept off Ethereum Sepolia so fees stay flat as the registry grows: ~115K gas per root update and ~250K–267K gas per proof verification.",
+      "Proof lookups hold at ~10 ms p50 across 4.5M property records, and caching cut API p99 latency 96.5%, from 1,003 ms to 35 ms.",
+      "Self-audited and closed 3 vulnerabilities (proof replay, an exposed public endpoint, a transfer-window ownership race); validated across 22 Sepolia rounds with 740 automated tests.",
     ],
-    // TODO: swap for the thesis repo once it is public.
-    repoUrl: "https://github.com/SnowAceAlex",
+    repoUrl: "https://github.com/SnowAceAlex/land-registry-zkp",
   },
   {
     slug: "instameow",
@@ -138,11 +142,11 @@ export const experience: Job[] = [
     about:
       "Digital transformation and SaaS company. Worked inside a 10–12 person engineering team on a live booking product.",
     points: [
-      "Fixed composite-resource booking logic that scheduled related resources in the wrong part of the hierarchy, caught before production.",
-      "Resolved an urgent concurrency bug in simultaneous bookings by replacing a lock-based bottleneck with a database constraint check.",
-      "Built client-side reconciliation for bookings that succeeded on the server but never reached the client, with no schema change needed.",
-      "Standardised error handling across core booking flows, so failures give actionable messages and no longer leave slots locked.",
-      "Worked with Claude Code and Cursor daily, about 30% faster on routine tickets, while keeping full code-review ownership.",
+      "Fixed composite-resource booking logic where creating one resource scheduled related resources elsewhere in the hierarchy, caught before production.",
+      "Fixed an urgent concurrency bug where simultaneous bookings returned a generic server error, replacing a lock-based bottleneck with a database constraint check.",
+      "Built client-side reconciliation for a network-drop edge case where a booking succeeded on the server but the response never reached the client, with no schema change needed.",
+      "Standardised error handling across 2–3 core booking flows, so failures give actionable messages and no longer leave slots locked.",
+      "Worked with Claude Code and Cursor daily: about 30% faster on routine work, usually shipping a ticket within one working session, while keeping full code-review ownership.",
     ],
     tech: ["TypeScript", "Next.js", "React Native / Expo", "NestJS", "Prisma", "C# / .NET 8", "ABP", "PostgreSQL", "Redis"],
   },
@@ -168,8 +172,8 @@ export type JourneyStop = {
   date: string;
   title: string;
   body: string;
-  // Hatched placeholder until `src` is delivered.
-  illustration?: { label: string; src?: string };
+  // Hatched placeholder until `image` is delivered.
+  illustration?: { label: string; image?: SlotImage };
 };
 
 export const journey: JourneyStop[] = [
@@ -184,7 +188,14 @@ export const journey: JourneyStop[] = [
     date: "May 2025",
     title: "Runner-up, IT Hackathon 2025",
     body: "Built and pitched with a team in the Solana Pragmatic track.",
-    illustration: { label: "Illustration · pit lane\nthe hackathon crew around one laptop" },
+    illustration: {
+      label: "Illustration · pit lane\nthe hackathon crew around one laptop",
+      image: {
+        src: "/hackathon-2025-team.jpg",
+        alt: "Vinh's team of five on stage at IT Hackathon 2025 with their medals and the runner-up prize board",
+        position: "center 45%",
+      },
+    },
   },
   {
     km: 2,
