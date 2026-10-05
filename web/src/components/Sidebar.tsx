@@ -30,8 +30,12 @@ export function Sidebar() {
         <br />
         Bui.
       </p>
-      <p className="mt-1.5 font-hand text-[26px] leading-none">aka {site.handle}</p>
-      <p className="mt-4 text-pretty text-[12.5px] leading-[1.7]">“{site.tagline}”</p>
+      <p className="mt-1.5 font-hand text-[26px] leading-none">
+        aka {site.handle}
+      </p>
+      <p className="mt-4 text-pretty text-[12.5px] leading-[1.7]">
+        “{site.tagline}”
+      </p>
       <ul className="mt-[22px] flex flex-col gap-3 text-[12px] leading-[1.45]">
         {site.affiliations.map((a) => (
           <li key={a.at}>
@@ -73,12 +77,15 @@ function DrivingStrip() {
     const el = car.current;
     if (!el) return;
     const span = (el.parentElement?.clientWidth ?? 190) + 50;
-    const x = reduce ? 70 : ((t / 1000) * 26) % span - 44;
+    const x = reduce ? 70 : (((t / 1000) * 26) % span) - 44;
     el.style.transform = `translateX(${x}px)`;
   });
 
   return (
-    <div className="relative mt-auto h-[58px] flex-none overflow-hidden" aria-hidden="true">
+    <div
+      className="relative mt-auto h-[58px] flex-none overflow-hidden"
+      aria-hidden="true"
+    >
       {snow.map((s) => (
         <span
           key={s.left}
@@ -88,7 +95,11 @@ function DrivingStrip() {
       ))}
       <div className="absolute inset-x-0 bottom-[9px] border-t-[1.5px] border-ink" />
       <div className="absolute inset-x-0 bottom-[3px] border-t-[1.5px] border-dashed border-ink opacity-35" />
-      <div ref={car} className="absolute bottom-[10px] left-0 will-change-transform" style={{ transform: "translateX(70px)" }}>
+      <div
+        ref={car}
+        className="absolute bottom-[10px] left-0 will-change-transform"
+        style={{ transform: "translateX(70px)" }}
+      >
         <CarGlyph />
       </div>
     </div>

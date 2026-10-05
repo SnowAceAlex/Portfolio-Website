@@ -2,14 +2,15 @@
 
 import { useRef, useState, type KeyboardEvent } from "react";
 import { motion, useAnimationFrame } from "motion/react";
+import { EngineStart } from "@/components/hero/EngineStart";
 import { Chip } from "@/components/Tag";
 import { formatDay, formatTime, formatTimeShort, useNow } from "@/lib/clock";
 import { useReducedMotionSafe } from "@/lib/motion";
 
 const label = "text-[9px] tracking-[.16em] opacity-80";
 
-// A road pass hanging from the rear-view mirror. Clicking it stamps "ENGINE ON" (once),
-// kicks the swing and makes the 3D car hop.
+// A road pass hanging from the rear-view mirror. Clicking it, or starting the engine below it,
+// stamps "ENGINE ON" (once), kicks the swing and makes the 3D car hop.
 export function RoadPass({ onStart }: { onStart: () => void }) {
   const reduce = useReducedMotionSafe();
   const now = useNow();
@@ -29,10 +30,15 @@ export function RoadPass({ onStart }: { onStart: () => void }) {
     el.style.transform = `rotate(${angle}deg)`;
   });
 
-  const start = () => {
+  // Kick the swing and land the stamp (first time only): shared by the tag and the engine button.
+  const ignite = () => {
     kickAt.current = performance.now();
+    setStampTime((t) => t ?? formatTimeShort(new Date()));
+  };
+
+  const start = () => {
+    ignite();
     onStart();
-    if (!stampTime) setStampTime(formatTimeShort(new Date()));
   };
 
   const onKey = (e: KeyboardEvent) => {
@@ -43,7 +49,7 @@ export function RoadPass({ onStart }: { onStart: () => void }) {
   };
 
   return (
-    <div className="relative flex min-h-[460px] min-w-0 flex-[5_1_320px] flex-col items-center overflow-hidden rounded-2xl border-[1.5px] border-ink bg-panel">
+    <div className="relative flex min-h-[560px] min-w-0 flex-[5_1_320px] flex-col items-center overflow-hidden rounded-2xl border-[1.5px] border-ink bg-panel">
       <Chip className="absolute left-3.5 top-3.5">№ 01</Chip>
       {/* the rear-view mirror tab the pass hangs from */}
       <div className="-mt-[1.5px] h-3.5 w-[92px] rounded-b-[10px] border-[1.5px] border-t-0 border-ink bg-hatch" aria-hidden="true" />
@@ -122,9 +128,7 @@ export function RoadPass({ onStart }: { onStart: () => void }) {
           )}
         </div>
       </div>
-      <p className="mt-auto px-[18px] pb-5 pt-[18px] text-center font-hand text-[30px] leading-none" aria-live="polite">
-        {stampTime ? "engine on. enjoy the drive" : "click to start the engine"}
-      </p>
+      <EngineStart onStart={ignite} onRevPeak={onStart} />
     </div>
   );
 }

@@ -10,6 +10,13 @@ import type { SceneHandle } from "./HeroScene";
 // fill with ink edge lines on top; the car is the only solid ink object. The world scrolls past
 // the car, so nothing travels far from the origin.
 
+// R3F 9 creates a THREE.Clock for its store, which three r183+ flags as deprecated on every
+// Canvas mount. Drop that one warning until R3F moves to THREE.Timer (v10); pass the rest through.
+THREE.setConsoleFunction((type: "log" | "warn" | "error", message: string, ...params: unknown[]) => {
+  if (type === "warn" && message.startsWith("THREE.Clock:")) return;
+  console[type](message, ...params);
+});
+
 const INK = "#2b63cc"; // --ink-base, the car blue
 const SPEED = 7.5; // world units per second
 const DASH_GAP = 2.8;
